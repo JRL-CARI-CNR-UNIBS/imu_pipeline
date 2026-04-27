@@ -21,10 +21,12 @@ namespace imu_transformer
 
     target_frame_ = this->declare_parameter<std::string>("target_frame", "base_link");
 
-    imu_pub_ = this->create_publisher<ImuMsg>("imu_out", 10);
-    mag_pub_ = this->create_publisher<MagMsg>("mag_out", 10);
+    auto qos = rclcpp::SensorDataQoS();
+    
+    imu_pub_ = this->create_publisher<ImuMsg>("imu_out", qos);
+    mag_pub_ = this->create_publisher<MagMsg>("mag_out", qos);
 
-    imu_sub_.subscribe(this, "imu_in", 10);
+    imu_sub_.subscribe(this, "imu_in", qos.get_rmw_qos_profile());
 
     std::chrono::duration<int> buffer_timeout(1);
 
@@ -33,7 +35,7 @@ namespace imu_transformer
     // function deactivated in foxy
     //imu_filter_->registerFailureCallback&ImuTransformer::failureCb, this);
 
-    mag_sub_.subscribe(this, "mag_in", 10);
+    mag_sub_.subscribe(this, "mag_in", qos.get_rmw_qos_profile());
     mag_filter_ = std::make_shared<MagFilter>(mag_sub_, *tf2_buffer_, target_frame_, 10, this->get_node_logging_interface(), this->get_node_clock_interface(), buffer_timeout);
     mag_filter_->registerCallback(&ImuTransformer::magCallback, this);
     // function deactivated in foxy
